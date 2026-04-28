@@ -38,13 +38,13 @@ export default function MetricInput({ onSave, loading }: MetricInputProps) {
       
       <div className="grid grid-cols-2 gap-4">
         <div className="field-group">
-          <label className="field-label">日期</label>
+          <label className="field-label">骨骼肌量 (%)</label>
           <input 
-            type="date" 
-            value={date} 
-            onChange={e => setDate(e.target.value)}
+            type="number" 
+            step="0.1"
+            value={skeletalMuscle} 
+            onChange={e => setSkeletalMuscle(e.target.value)}
             className="field-input"
-            required
           />
         </div>
         <div className="field-group">
@@ -85,13 +85,13 @@ export default function MetricInput({ onSave, loading }: MetricInputProps) {
 
       <div className="grid grid-cols-1 gap-4">
         <div className="field-group">
-          <label className="field-label">骨骼肌量 (%)</label>
+          <label className="field-label">日期</label>
           <input 
-            type="number" 
-            step="0.1"
-            value={skeletalMuscle} 
-            onChange={e => setSkeletalMuscle(e.target.value)}
+            type="date" 
+            value={date} 
+            onChange={e => setDate(e.target.value)}
             className="field-input"
+            required
           />
         </div>
       </div>
