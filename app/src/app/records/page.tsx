@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import type { FoodRecord, DayGroup } from '@/lib/types';
+import type { FoodRecord, DayGroup, BodyMetric, ExerciseRecord } from '@/lib/types';
 import RecordItem from '@/components/RecordItem';
 
 export default function RecordsPage() {
