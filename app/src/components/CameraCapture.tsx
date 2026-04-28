@@ -7,7 +7,7 @@ interface CameraCaptureProps {
   disabled?: boolean;
 }
 
-function compressImage(file: File, maxWidth = 1024): Promise<{ base64: string; mimeType: string }> {
+function compressImage(file: File, maxDim = 1600, quality = 0.7): Promise<{ base64: string; mimeType: string }> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -16,9 +16,16 @@ function compressImage(file: File, maxWidth = 1024): Promise<{ base64: string; m
         const canvas = document.createElement('canvas');
         let { width, height } = img;
 
-        if (width > maxWidth) {
-          height = (height * maxWidth) / width;
-          width = maxWidth;
+        if (width > height) {
+          if (width > maxDim) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          }
+        } else {
+          if (height > maxDim) {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
         }
 
         canvas.width = width;
@@ -29,7 +36,7 @@ function compressImage(file: File, maxWidth = 1024): Promise<{ base64: string; m
           return;
         }
         ctx.drawImage(img, 0, 0, width, height);
-        const base64 = canvas.toDataURL('image/jpeg', 0.8);
+        const base64 = canvas.toDataURL('image/jpeg', quality);
         resolve({ base64, mimeType: 'image/jpeg' });
       };
       img.onerror = reject;

@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
 
     const now = new Date();
     let startDate: string;
-    const endDate = now.toISOString().split('T')[0];
+    let endDate = now.toISOString().split('T')[0];
 
     switch (period) {
       case 'week': {
@@ -56,6 +56,12 @@ export async function GET(req: NextRequest) {
         const monthAgo = new Date(now);
         monthAgo.setDate(monthAgo.getDate() - 29);
         startDate = monthAgo.toISOString().split('T')[0];
+        break;
+      }
+      case 'custom': {
+        const date = searchParams.get('date');
+        startDate = date || endDate;
+        endDate = date || endDate;
         break;
       }
       default:

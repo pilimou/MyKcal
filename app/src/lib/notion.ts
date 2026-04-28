@@ -1,10 +1,12 @@
 import { Client } from '@notionhq/client';
-import type { FoodRecord, MealType, Stats, UserProfile } from './types';
+import type { FoodRecord, MealType, Stats, UserProfile, BodyMetric, ExerciseRecord } from './types';
 
 const notion = new Client({ auth: process.env.NOTION_API_KEY });
 console.log('Notion Client keys:', Object.keys(notion));
 const databaseId = process.env.NOTION_DATABASE_ID!;
 const userDatabaseId = process.env.NOTION_USER_DATABASE_ID!;
+const metricsDatabaseId = process.env.NOTION_METRICS_DATABASE_ID!;
+const exercisesDatabaseId = process.env.NOTION_EXERCISES_DATABASE_ID!;
 
 const MEAL_MAP: Record<string, MealType> = {
   '早餐': 'breakfast',
@@ -301,6 +303,113 @@ export async function updateUserProfile(email: string, data: Partial<UserProfile
 }
 
 export async function deleteFoodRecord(pageId: string) {
+  await notion.pages.update({
+    page_id: pageId,
+    archived: true,
+  });
+}
+
+// Body Metrics Functions
+export async function createBodyMetric(data: {
+  date: string;
+  weight: number;
+  bodyFat?: number;
+  waist?: number;
+  skeletalMuscle?: number;
+  userEmail: string;
+}): Promise<string> {
+  const properties: any = {
+    '日期': { title: [{ text: { content: data.date } }] },
+    '體重': { number: data.weight },
+    '使用者 email': { rich_text: [{ text: { content: data.userEmail } }] },
+  };
+  if (data.bodyFat !== undefined) properties['體脂'] = { number: data.bodyFat };
+  if (data.waist !== undefined) properties['腰圍'] = { number: data.waist };
+  if (data.skeletalMuscle !== undefined) properties['骨骼肌量'] = { number: data.skeletalMuscle };
+
+  const response = await notion.pages.create({
+    parent: { database_id: metricsDatabaseId },
+    properties,
+  });
+  return response.id;
+}
+
+export async function queryMetrics(userEmail: string, startDate: string, endDate: string): Promise<BodyMetric[]> {
+  const response = await notion.databases.query({
+    database_id: metricsDatabaseId,
+    filter: {
+      property: '使用者 email',
+      rich_text: { equals: userEmail },
+    },
+    sorts: [{ property: '日期', direction: 'ascending' }],
+  });
+
+  const allMetrics = response.results.map((page: any) => ({
+    id: page.id,
+    date: page.properties['日期']?.title?.[0]?.text?.content || '',
+    weight: page.properties['體重']?.number || 0,
+    bodyFat: page.properties['體脂']?.number || undefined,
+    waist: page.properties['腰圍']?.number || undefined,
+    skeletalMuscle: page.properties['骨骼肌量']?.number || undefined,
+    userEmail: page.properties['使用者 email']?.rich_text?.[0]?.text?.content || '',
+  }));
+
+  // Filter by date in memory because Title property doesn't support date range filters
+  return allMetrics.filter(m => m.date >= startDate && m.date <= endDate);
+}
+
+// Exercise Functions
+export async function createExerciseRecord(data: {
+  date: string;
+  type: string;
+  amount: string;
+  caloriesBurned: number;
+  userEmail: string;
+}): Promise<string> {
+  const response = await notion.pages.create({
+    parent: { database_id: exercisesDatabaseId },
+    properties: {
+      '日期': { title: [{ text: { content: data.date } }] },
+      '運動種類': { rich_text: [{ text: { content: data.type } }] },
+      '運動量': { rich_text: [{ text: { content: data.amount } }] },
+      '消耗熱量': { number: data.caloriesBurned },
+      '使用者 Email': { rich_text: [{ text: { content: data.userEmail } }] },
+    },
+  });
+  return response.id;
+}
+
+export async function queryExercises(userEmail: string, startDate: string, endDate: string): Promise<ExerciseRecord[]> {
+  const response = await notion.databases.query({
+    database_id: exercisesDatabaseId,
+    filter: {
+      property: '使用者 Email',
+      rich_text: { equals: userEmail },
+    },
+    sorts: [{ property: '日期', direction: 'descending' }],
+  });
+
+  const allExercises = response.results.map((page: any) => ({
+    id: page.id,
+    date: page.properties['日期']?.title?.[0]?.text?.content || '',
+    type: page.properties['運動種類']?.rich_text?.[0]?.text?.content || '',
+    amount: page.properties['運動量']?.rich_text?.[0]?.text?.content || '',
+    caloriesBurned: page.properties['消耗熱量']?.number || 0,
+    userEmail: page.properties['使用者 Email']?.rich_text?.[0]?.text?.content || '',
+  }));
+
+  // Filter by date in memory
+  return allExercises.filter(ex => ex.date >= startDate && ex.date <= endDate);
+}
+
+export async function deleteBodyMetric(pageId: string) {
+  await notion.pages.update({
+    page_id: pageId,
+    archived: true,
+  });
+}
+
+export async function deleteExerciseRecord(pageId: string) {
   await notion.pages.update({
     page_id: pageId,
     archived: true,

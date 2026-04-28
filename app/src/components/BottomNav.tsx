@@ -5,7 +5,10 @@ import { usePathname } from 'next/navigation';
 
 const tabs = [
   { href: '/', label: '總覽', icon: 'chart' },
+  { href: '/calendar', label: '月曆', icon: 'calendar' },
   { href: '/scan', label: '掃描', icon: 'scan' },
+  { href: '/exercise', label: '運動', icon: 'activity' },
+  { href: '/metrics', label: '體重', icon: 'scale' },
   { href: '/records', label: '紀錄', icon: 'list' },
   { href: '/settings', label: '設定', icon: 'settings' },
 ] as const;
@@ -20,6 +23,30 @@ function TabIcon({ icon, active }: { icon: string; active: boolean }) {
           <path d="M18 17V9" />
           <path d="M13 17V5" />
           <path d="M8 17v-3" />
+        </svg>
+      );
+    case 'calendar':
+      return (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+          <line x1="16" y1="2" x2="16" y2="6" />
+          <line x1="8" y1="2" x2="8" y2="6" />
+          <line x1="3" y1="10" x2="21" y2="10" />
+        </svg>
+      );
+    case 'activity':
+      return (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+        </svg>
+      );
+    case 'scale':
+      return (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M16 16c0 1.1-.9 2-2 2H10c-1.1 0-2-.9-2-2" />
+          <path d="M7 10h10" />
+          <path d="M12 10v6" />
+          <rect x="3" y="3" width="18" height="18" rx="2" />
         </svg>
       );
     case 'scan':

@@ -56,8 +56,29 @@ export interface UserProfile {
 export interface DayGroup {
   date: string;
   records: FoodRecord[];
+  metrics: BodyMetric[];
+  exercises: ExerciseRecord[];
   totalCalories: number;
   totalPrice: number;
+}
+
+export interface BodyMetric {
+  id: string;
+  date: string;
+  weight: number;
+  bodyFat?: number;
+  waist?: number;
+  skeletalMuscle?: number;
+  userEmail: string;
+}
+
+export interface ExerciseRecord {
+  id: string;
+  date: string;
+  type: string;
+  amount: string;
+  caloriesBurned: number;
+  userEmail: string;
 }
 
 export interface Stats {
