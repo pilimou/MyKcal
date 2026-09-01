@@ -58,6 +58,16 @@ export default function ShareCalendarPage({
   const [selectedDay, setSelectedDay] = useState<DayData | null>(null);
   const [onlyRecordedDays, setOnlyRecordedDays] = useState(true);
 
+  // 裝置偵測：手機預設為「整月清單」，電腦/寬螢幕預設為「月曆網格」
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const isMobile =
+        window.innerWidth < 768 ||
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      setViewMode(isMobile ? 'list' : 'grid');
+    }
+  }, []);
+
   const fetchShareData = useCallback(async (date: Date) => {
     setLoading(true);
     setError(null);
