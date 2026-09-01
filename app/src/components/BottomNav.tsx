@@ -85,6 +85,10 @@ function TabIcon({ icon, active }: { icon: string; active: boolean }) {
 export default function BottomNav() {
   const pathname = usePathname();
 
+  if (pathname.startsWith('/share') || pathname === '/login') {
+    return null;
+  }
+
   return (
     <nav id="bottom-nav" className="bottom-nav">
       {tabs.map((tab) => {

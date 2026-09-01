@@ -51,6 +51,7 @@ export interface UserProfile {
   weight: number;
   activityLevel: 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active';
   targetCalories: number;
+  shareToken?: string;
 }
 
 export interface DayGroup {

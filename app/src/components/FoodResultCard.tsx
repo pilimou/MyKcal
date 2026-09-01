@@ -29,16 +29,25 @@ export default function FoodResultCard({
   saving,
 }: FoodResultCardProps) {
   const [name, setName] = useState(analysis.name);
-  const [calories, setCalories] = useState(analysis.calories);
-  const [protein, setProtein] = useState(analysis.protein);
-  const [carbs, setCarbs] = useState(analysis.carbs);
-  const [fat, setFat] = useState(analysis.fat);
-  const [price, setPrice] = useState(analysis.estimatedPrice);
+  const [calories, setCalories] = useState<number | ''>(analysis.calories || '');
+  const [protein, setProtein] = useState<number | ''>(analysis.protein || '');
+  const [carbs, setCarbs] = useState<number | ''>(analysis.carbs || '');
+  const [fat, setFat] = useState<number | ''>(analysis.fat || '');
+  const [price, setPrice] = useState<number | ''>(analysis.estimatedPrice || '');
   const [mealType, setMealType] = useState<MealType>('lunch');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
 
   const handleSave = () => {
-    onSave({ name, calories, protein, carbs, fat, price, mealType, date });
+    onSave({
+      name,
+      calories: Number(calories) || 0,
+      protein: Number(protein) || 0,
+      carbs: Number(carbs) || 0,
+      fat: Number(fat) || 0,
+      price: Number(price) || 0,
+      mealType,
+      date,
+    });
   };
 
   const confidenceColor =
@@ -71,8 +80,10 @@ export default function FoodResultCard({
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
+            onFocus={(e) => e.target.select()}
             className="field-input text-lg font-bold"
             id="food-name-input"
+            placeholder="食物名稱"
           />
         </div>
 
@@ -84,9 +95,11 @@ export default function FoodResultCard({
               <input
                 type="number"
                 value={calories}
-                onChange={(e) => setCalories(Number(e.target.value))}
+                onChange={(e) => setCalories(e.target.value === '' ? '' : Number(e.target.value))}
+                onFocus={(e) => e.target.select()}
                 className="field-input-sm"
                 id="calories-input"
+                placeholder="0"
               />
               <span className="nutrition-unit">kcal</span>
             </div>
@@ -98,9 +111,11 @@ export default function FoodResultCard({
                 type="number"
                 step="0.1"
                 value={protein}
-                onChange={(e) => setProtein(Number(e.target.value))}
+                onChange={(e) => setProtein(e.target.value === '' ? '' : Number(e.target.value))}
+                onFocus={(e) => e.target.select()}
                 className="field-input-sm"
                 id="protein-input"
+                placeholder="0"
               />
               <span className="nutrition-unit">g</span>
             </div>
@@ -112,9 +127,11 @@ export default function FoodResultCard({
                 type="number"
                 step="0.1"
                 value={carbs}
-                onChange={(e) => setCarbs(Number(e.target.value))}
+                onChange={(e) => setCarbs(e.target.value === '' ? '' : Number(e.target.value))}
+                onFocus={(e) => e.target.select()}
                 className="field-input-sm"
                 id="carbs-input"
+                placeholder="0"
               />
               <span className="nutrition-unit">g</span>
             </div>
@@ -126,9 +143,11 @@ export default function FoodResultCard({
                 type="number"
                 step="0.1"
                 value={fat}
-                onChange={(e) => setFat(Number(e.target.value))}
+                onChange={(e) => setFat(e.target.value === '' ? '' : Number(e.target.value))}
+                onFocus={(e) => e.target.select()}
                 className="field-input-sm"
                 id="fat-input"
+                placeholder="0"
               />
               <span className="nutrition-unit">g</span>
             </div>
@@ -141,7 +160,8 @@ export default function FoodResultCard({
             <input
               type="number"
               value={price}
-              onChange={(e) => setPrice(Number(e.target.value))}
+              onChange={(e) => setPrice(e.target.value === '' ? '' : Number(e.target.value))}
+              onFocus={(e) => e.target.select()}
               className="field-input"
               id="price-input"
               placeholder="0"

@@ -243,6 +243,91 @@ export async function findUserByCredentials(email: string, name: string) {
   };
 }
 
+export function generateShareToken(): string {
+  const chars = '23456789abcdefghjkmnpqrstuvwxyz';
+  let result = '';
+  for (let i = 0; i < 8; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
+async function ensureShareTokenProperty() {
+  try {
+    const db = (await notion.databases.retrieve({ database_id: userDatabaseId })) as any;
+    if (!db.properties['分享代碼']) {
+      await notion.databases.update({
+        database_id: userDatabaseId,
+        properties: {
+          '分享代碼': { rich_text: {} },
+        },
+      });
+    }
+  } catch (e) {
+    console.error('ensureShareTokenProperty error:', e);
+  }
+}
+
+export async function findUserByShareToken(token: string): Promise<{ email: string; name: string } | null> {
+  const cleanToken = token.trim();
+  if (!cleanToken) return null;
+
+  try {
+    const response = await notion.databases.query({
+      database_id: userDatabaseId,
+    });
+
+    for (const page of response.results as any[]) {
+      const shareToken = page.properties['分享代碼']?.rich_text?.[0]?.text?.content || '';
+      const name = page.properties['名字']?.rich_text?.[0]?.text?.content || '';
+      const email = page.properties['使用者 Email']?.title?.[0]?.text?.content || '';
+
+      if (shareToken && shareToken === cleanToken) {
+        return { email, name: name || '用戶' };
+      }
+      // Backward compatibility for username transition
+      if (name && (name === cleanToken || name === decodeURIComponent(cleanToken))) {
+        return { email, name };
+      }
+    }
+
+    return null;
+  } catch (error) {
+    console.error('findUserByShareToken error:', error);
+    return null;
+  }
+}
+
+export async function resetShareToken(email: string): Promise<string> {
+  const newToken = generateShareToken();
+  const response = await notion.databases.query({
+    database_id: userDatabaseId,
+    filter: { property: '使用者 Email', title: { equals: email } },
+  });
+
+  if (response.results.length === 0) throw new Error('User not found');
+  const targetId = response.results[0].id;
+
+  try {
+    await notion.pages.update({
+      page_id: targetId,
+      properties: {
+        '分享代碼': { rich_text: [{ text: { content: newToken } }] },
+      },
+    });
+  } catch {
+    await ensureShareTokenProperty();
+    await notion.pages.update({
+      page_id: targetId,
+      properties: {
+        '分享代碼': { rich_text: [{ text: { content: newToken } }] },
+      },
+    });
+  }
+
+  return newToken;
+}
+
 export async function getUserProfile(email: string): Promise<UserProfile | null> {
   const response = await notion.databases.query({
     database_id: userDatabaseId,
@@ -259,6 +344,27 @@ export async function getUserProfile(email: string): Promise<UserProfile | null>
 
   const genderStr = props['性別']?.rich_text?.[0]?.text?.content || '';
   const activityStr = props['活動等級']?.rich_text?.[0]?.text?.content || '';
+  let shareToken = props['分享代碼']?.rich_text?.[0]?.text?.content || '';
+
+  if (!shareToken) {
+    shareToken = generateShareToken();
+    try {
+      await notion.pages.update({
+        page_id: page.id,
+        properties: {
+          '分享代碼': { rich_text: [{ text: { content: shareToken } }] },
+        },
+      });
+    } catch {
+      await ensureShareTokenProperty();
+      await notion.pages.update({
+        page_id: page.id,
+        properties: {
+          '分享代碼': { rich_text: [{ text: { content: shareToken } }] },
+        },
+      });
+    }
+  }
 
   return {
     email: props['使用者 Email']?.title?.[0]?.text?.content || '',
@@ -269,6 +375,7 @@ export async function getUserProfile(email: string): Promise<UserProfile | null>
     weight: props['體重']?.number || 0,
     activityLevel: ACTIVITY_MAP[activityStr] || 'sedentary',
     targetCalories: props['目標熱量']?.number || 2000,
+    shareToken,
   };
 }
 

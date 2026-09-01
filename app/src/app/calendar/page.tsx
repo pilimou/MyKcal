@@ -1,18 +1,36 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useSession } from 'next-auth/react';
 import CalendarGrid from '@/components/CalendarGrid';
 import RecordItem from '@/components/RecordItem';
 import type { FoodRecord, ExerciseRecord } from '@/lib/types';
 import { format } from 'date-fns';
 
 export default function CalendarPage() {
+  const { data: session } = useSession();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [dailyData, setDailyData] = useState<Record<string, { food: number; exercise: number; target: number }>>({});
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedRecords, setSelectedRecords] = useState<{ food: FoodRecord[]; exercise: ExerciseRecord[] }>({ food: [], exercise: [] });
   const [loading, setLoading] = useState(true);
   const [detailsLoading, setDetailsLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyShareLink = async () => {
+    try {
+      const res = await fetch('/api/user/share-token');
+      const data = await res.json();
+      const token = data.shareToken || (session?.user?.name ? encodeURIComponent(session.user.name) : '');
+      if (!token) return;
+      const shareUrl = `${window.location.origin}/share/${token}`;
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch (err) {
+      console.error('Failed to copy share link:', err);
+    }
+  };
 
   const fetchCalendarData = useCallback(async (date: Date) => {
     setLoading(true);
@@ -59,7 +77,22 @@ export default function CalendarPage() {
 
   return (
     <main className="page animate-fade-in pb-24 w-full">
-      <h1 className="page-title">熱量月曆</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="page-title !mb-0">熱量月曆</h1>
+        {session?.user?.name && (
+          <button
+            onClick={handleCopyShareLink}
+            className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 border border-slate-700 transition"
+            title="複製免登入公開分享連結"
+          >
+            {copied ? (
+              <span className="text-emerald-400">已複製分享連結！</span>
+            ) : (
+              <span>複製分享連結</span>
+            )}
+          </button>
+        )}
+      </div>
 
       <CalendarGrid 
         dailyData={dailyData} 

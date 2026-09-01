@@ -188,6 +188,68 @@ export default function SettingsPage() {
         </form>
       </div>
 
+      {profile && (
+        <div className="glass-card mb-6 p-4 rounded-2xl border border-white/10 flex flex-col gap-2.5">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-bold text-slate-200">公開月曆分享</h2>
+            <span className="text-[11px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
+              代碼：{profile.shareToken || '尚未產生'}
+            </span>
+          </div>
+          <p className="text-xs text-slate-400">
+            將唯讀月曆連結分享給教練或朋友，讓對方免登入直接查看整月份飲食與運動。
+          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <input
+              type="text"
+              readOnly
+              value={typeof window !== 'undefined' && profile.shareToken ? `${window.location.origin}/share/${profile.shareToken}` : ''}
+              className="field-input text-xs font-mono text-slate-300 bg-slate-900/60 flex-1"
+            />
+            <button
+              type="button"
+              onClick={async () => {
+                if (typeof window !== 'undefined' && profile.shareToken) {
+                  const url = `${window.location.origin}/share/${profile.shareToken}`;
+                  await navigator.clipboard.writeText(url);
+                  setMessage('已成功複製公開月曆網址！');
+                  setTimeout(() => setMessage(''), 3000);
+                }
+              }}
+              className="px-3 py-2 text-xs font-bold rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition active:scale-95 whitespace-nowrap"
+            >
+              複製連結
+            </button>
+          </div>
+          <div className="pt-2 border-t border-white/5 flex items-center justify-between">
+            <p className="text-[11px] text-slate-500">
+              若不想讓舊訪客繼續查看，可隨時重新產生代碼：
+            </p>
+            <button
+              type="button"
+              onClick={async () => {
+                if (!confirm('確定要重新產生分享代碼嗎？\n原本已發送出去的舊分享連結將會立即失效！')) return;
+                try {
+                  const res = await fetch('/api/user/share-token', { method: 'POST' });
+                  const data = await res.json();
+                  if (data.shareToken) {
+                    setProfile({ ...profile, shareToken: data.shareToken });
+                    setMessage('已成功產生新分享代碼，舊連結已作廢！');
+                    setTimeout(() => setMessage(''), 3500);
+                  }
+                } catch (err) {
+                  console.error('Reset token error:', err);
+                  alert('重設代碼失敗，請稍後再試');
+                }
+              }}
+              className="text-xs px-2.5 py-1 rounded-lg text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 transition whitespace-nowrap"
+            >
+              🔄 重新產生代碼（廢除舊連結）
+            </button>
+          </div>
+        </div>
+      )}
+
       <button 
         onClick={() => signOut()}
         className="w-full py-4 text-red-400 font-bold border border-red-400/20 rounded-xl hover:bg-red-400/5 transition-colors"
