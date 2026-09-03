@@ -319,13 +319,13 @@ export default function ShareCalendarPage({
                         {dayData.foods.map((food, fIdx) => (
                           <div
                             key={food.id || fIdx}
-                            className="flex items-center gap-1 text-emerald-200/90 bg-emerald-500/10 hover:bg-emerald-500/20 px-1.5 py-0.5 rounded border border-emerald-500/20 truncate"
+                            className="flex items-start gap-1 text-emerald-200/90 bg-emerald-500/10 hover:bg-emerald-500/20 px-1.5 py-0.5 rounded border border-emerald-500/20"
                             title={`${MEAL_LABELS[food.mealType] || '飲食'}：${food.name}`}
                           >
                             <span className="font-bold text-emerald-400 shrink-0">
                               [{MEAL_LABELS[food.mealType] || '飲食'}]
                             </span>
-                            <span className="truncate">{food.name}</span>
+                            <span className="line-clamp-2">{food.name}</span>
                           </div>
                         ))}
 
@@ -459,13 +459,13 @@ export default function ShareCalendarPage({
                             {day.foods.map((food, fIdx) => (
                               <li
                                 key={food.id || fIdx}
-                                className="flex items-center justify-between text-xs py-1.5 px-2.5 rounded-lg bg-white/[0.02] border border-white/5"
+                                className="flex items-start justify-between text-xs py-1.5 px-2.5 rounded-lg bg-white/[0.02] border border-white/5"
                               >
-                                <div className="flex items-center gap-1.5 truncate min-w-0 pr-2">
+                                <div className="flex items-start gap-1.5 min-w-0 pr-2">
                                   <span className="text-emerald-400 font-bold shrink-0">
                                     [{MEAL_LABELS[food.mealType] || '飲食'}]
                                   </span>
-                                  <span className="font-medium text-slate-200 truncate">{food.name}</span>
+                                  <span className="font-medium text-slate-200 line-clamp-2">{food.name}</span>
                                 </div>
                                 {food.calories !== undefined && (
                                   <span className="text-[11px] text-slate-400 font-mono shrink-0 ml-2">
@@ -572,16 +572,16 @@ export default function ShareCalendarPage({
                       {selectedDay.foods.map((food, fIdx) => (
                         <div
                           key={food.id || fIdx}
-                          className="flex items-center justify-between p-2.5 rounded-xl bg-slate-800/60 border border-emerald-500/20"
+                          className="flex items-start justify-between p-2.5 rounded-xl bg-slate-800/60 border border-emerald-500/20"
                         >
-                          <div className="flex items-center gap-2 min-w-0 pr-2">
-                            <span className="text-xs font-bold text-emerald-400 shrink-0">
+                          <div className="flex items-start gap-2 min-w-0 pr-2">
+                            <span className="text-xs font-bold text-emerald-400 shrink-0 mt-0.5">
                               [{MEAL_LABELS[food.mealType] || '飲食'}]
                             </span>
-                            <span className="text-sm font-medium text-slate-100 truncate">{food.name}</span>
+                            <span className="text-sm font-medium text-slate-100 line-clamp-2">{food.name}</span>
                           </div>
                           {food.calories !== undefined && (
-                            <div className="text-right text-xs text-slate-300 font-mono shrink-0 ml-2">
+                            <div className="text-right text-xs text-slate-300 font-mono shrink-0 ml-2 mt-0.5">
                               <span>{food.calories} kcal</span>
                             </div>
                           )}
