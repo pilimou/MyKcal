@@ -38,8 +38,21 @@ export async function GET(
       string,
       {
         date: string;
-        foods: Array<{ id: string; name: string; mealType: string }>;
-        exercises: Array<{ id: string; type: string; amount: string; caloriesBurned: number }>;
+        foods: Array<{
+          id: string;
+          name: string;
+          mealType: string;
+          calories: number;
+          protein: number;
+          carbs: number;
+          fat: number;
+        }>;
+        exercises: Array<{
+          id: string;
+          type: string;
+          amount: string;
+          caloriesBurned: number;
+        }>;
       }
     > = {};
 
@@ -58,6 +71,10 @@ export async function GET(
           id: r.id,
           name: r.name,
           mealType: r.mealType,
+          calories: Number(r.calories) || 0,
+          protein: Number(r.protein) || 0,
+          carbs: Number(r.carbs) || 0,
+          fat: Number(r.fat) || 0,
         });
       }
     });
@@ -68,7 +85,7 @@ export async function GET(
           id: ex.id,
           type: ex.type,
           amount: ex.amount,
-          caloriesBurned: ex.caloriesBurned,
+          caloriesBurned: Number(ex.caloriesBurned) || 0,
         });
       }
     });
