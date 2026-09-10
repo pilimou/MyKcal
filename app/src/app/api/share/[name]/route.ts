@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { findUserByShareToken, queryRecords, queryExercises } from '@/lib/notion';
+import { findUserByShareToken, queryRecords, queryExercises, getUserProfile } from '@/lib/notion';
+import { compareMealOrder } from '@/lib/types';
 
 export async function GET(
   req: NextRequest,
@@ -28,10 +29,13 @@ export async function GET(
     const lastDay = new Date(year, mon, 0).getDate();
     const endDate = `${currentMonth}-${String(lastDay).padStart(2, '0')}`;
 
-    const [foodRecords, exerciseRecords] = await Promise.all([
+    const [foodRecords, exerciseRecords, profile] = await Promise.all([
       queryRecords(startDate, endDate, user.email),
       queryExercises(user.email, startDate, endDate),
+      getUserProfile(user.email),
     ]);
+
+    const targetCalories = profile?.targetCalories || 2000;
 
     // Build day map
     const dailyData: Record<
@@ -90,9 +94,14 @@ export async function GET(
       }
     });
 
+    Object.values(dailyData).forEach((day) => {
+      day.foods.sort(compareMealOrder);
+    });
+
     return NextResponse.json({
       success: true,
       userName: user.name,
+      targetCalories,
       month: currentMonth,
       days: dailyData,
     });

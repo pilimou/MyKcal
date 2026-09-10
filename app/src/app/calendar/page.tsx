@@ -4,13 +4,13 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import CalendarGrid from '@/components/CalendarGrid';
 import RecordItem from '@/components/RecordItem';
-import type { FoodRecord, ExerciseRecord } from '@/lib/types';
+import { type FoodRecord, type ExerciseRecord, type CalendarDaySummary, compareMealOrder } from '@/lib/types';
 import { format } from 'date-fns';
 
 export default function CalendarPage() {
   const { data: session } = useSession();
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [dailyData, setDailyData] = useState<Record<string, { food: number; exercise: number; target: number }>>({});
+  const [dailyData, setDailyData] = useState<Record<string, CalendarDaySummary>>({});
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedRecords, setSelectedRecords] = useState<{ food: FoodRecord[]; exercise: ExerciseRecord[] }>({ food: [], exercise: [] });
   const [loading, setLoading] = useState(true);
@@ -64,8 +64,10 @@ export default function CalendarPage() {
       const foodData = await foodRes.json();
       const exData = await exRes.json();
       
+      const foodList = (foodData.records || []).slice().sort(compareMealOrder);
+      
       setSelectedRecords({
-        food: foodData.records || [],
+        food: foodList,
         exercise: exData.exercises || [],
       });
     } catch (err) {
@@ -99,6 +101,7 @@ export default function CalendarPage() {
         onDateClick={handleDateClick} 
         currentDate={currentDate}
         onMonthChange={setCurrentDate}
+        selectedDate={selectedDate}
       />
 
       {selectedDate && (

@@ -1,5 +1,5 @@
 import { Client } from '@notionhq/client';
-import type { FoodRecord, MealType, Stats, UserProfile, BodyMetric, ExerciseRecord } from './types';
+import { type FoodRecord, type MealType, type Stats, type UserProfile, type BodyMetric, type ExerciseRecord, compareMealOrder } from './types';
 
 const notion = new Client({ auth: process.env.NOTION_API_KEY });
 console.log('Notion Client keys:', Object.keys(notion));
@@ -132,6 +132,13 @@ export async function queryRecords(
     hasMore = response.has_more;
     startCursor = response.next_cursor || undefined;
   }
+
+  records.sort((a, b) => {
+    if (a.date !== b.date) {
+      return b.date.localeCompare(a.date);
+    }
+    return compareMealOrder(a, b);
+  });
 
   return records;
 }

@@ -91,7 +91,7 @@ export default function MetricChart({ data }: MetricChartProps) {
             connectNulls
           />
           <Line 
-            name="骨骼肌量 (%)"
+            name="骨骼肌重 (kg)"
             type="monotone" 
             dataKey="skeletalMuscle" 
             stroke="#6366f1" 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import type { FoodRecord, DayGroup, BodyMetric, ExerciseRecord } from '@/lib/types';
+import { type FoodRecord, type DayGroup, type BodyMetric, type ExerciseRecord, compareMealOrder } from '@/lib/types';
 import RecordItem from '@/components/RecordItem';
 
 export default function RecordsPage() {
@@ -66,6 +66,11 @@ export default function RecordsPage() {
         groups[date] = { date, records: [], metrics: [], exercises: [], totalCalories: 0, totalPrice: 0 };
       }
       groups[date].exercises.push(ex);
+    });
+
+    // Sort food records inside each day from breakfast to late night
+    Object.values(groups).forEach((g) => {
+      g.records.sort(compareMealOrder);
     });
 
     return Object.values(groups).sort((a, b) => b.date.localeCompare(a.date));
@@ -192,8 +197,8 @@ export default function RecordsPage() {
                           )}
                           {m.skeletalMuscle && (
                             <div>
-                              <p className="text-[10px] text-slate-500 uppercase font-bold">肌肉</p>
-                              <span className="text-sm font-bold text-indigo-400">{m.skeletalMuscle}%</span>
+                              <p className="text-[10px] text-slate-500 uppercase font-bold">骨骼肌</p>
+                              <span className="text-sm font-bold text-indigo-400">{m.skeletalMuscle}kg</span>
                             </div>
                           )}
                         </div>

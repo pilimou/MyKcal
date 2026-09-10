@@ -119,8 +119,8 @@ export default function MetricsPage() {
                 )}
                 {m.skeletalMuscle && (
                   <div className="text-right">
-                    <span className="block text-[10px] text-slate-500 uppercase font-bold">肌肉</span>
-                    <span className="text-sm font-bold text-indigo-400">{m.skeletalMuscle}%</span>
+                    <span className="block text-[10px] text-slate-500 uppercase font-bold">骨骼肌</span>
+                    <span className="text-sm font-bold text-indigo-400">{m.skeletalMuscle}kg</span>
                   </div>
                 )}
               </div>

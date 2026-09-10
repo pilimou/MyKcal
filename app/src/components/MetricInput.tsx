@@ -38,7 +38,7 @@ export default function MetricInput({ onSave, loading }: MetricInputProps) {
       
       <div className="grid grid-cols-2 gap-4">
         <div className="field-group">
-          <label className="field-label">骨骼肌量 (%)</label>
+          <label className="field-label">骨骼肌重 (kg)</label>
           <input 
             type="number" 
             step="0.1"

@@ -18,6 +18,28 @@ export const MEAL_COLORS: Record<MealType, string> = {
   snack: '#ec4899',
 };
 
+export const MEAL_ORDER: Record<MealType, number> = {
+  breakfast: 1,
+  lunch: 2,
+  afternoon_tea: 3,
+  dinner: 4,
+  late_night: 5,
+  snack: 6,
+};
+
+export function compareMealOrder(
+  a: { mealType?: string; createdAt?: string },
+  b: { mealType?: string; createdAt?: string }
+): number {
+  const orderA = MEAL_ORDER[a.mealType as MealType] ?? 99;
+  const orderB = MEAL_ORDER[b.mealType as MealType] ?? 99;
+  if (orderA !== orderB) return orderA - orderB;
+  if (a.createdAt && b.createdAt) {
+    return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+  }
+  return 0;
+}
+
 export interface FoodAnalysis {
   name: string;
   calories: number;
@@ -52,6 +74,15 @@ export interface UserProfile {
   activityLevel: 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active';
   targetCalories: number;
   shareToken?: string;
+}
+
+export interface CalendarDaySummary {
+  food: number;
+  exercise: number;
+  target: number;
+  protein?: number;
+  carbs?: number;
+  fat?: number;
 }
 
 export interface DayGroup {

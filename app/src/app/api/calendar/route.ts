@@ -32,20 +32,27 @@ export async function GET(req: NextRequest) {
     const targetCalories = profile?.targetCalories || 2000;
 
     // Group by date
-    const dailyData: Record<string, { food: number; exercise: number; target: number }> = {};
+    const dailyData: Record<string, { food: number; exercise: number; target: number; protein: number; carbs: number; fat: number }> = {};
 
     // Initialize all days of the month
     for (let i = 1; i <= lastDay; i++) {
       const date = `${currentMonth}-${String(i).padStart(2, '0')}`;
-      dailyData[date] = { food: 0, exercise: 0, target: targetCalories };
+      dailyData[date] = { food: 0, exercise: 0, target: targetCalories, protein: 0, carbs: 0, fat: 0 };
     }
 
     foodRecords.forEach(r => {
-      if (dailyData[r.date]) dailyData[r.date].food += r.calories;
+      if (dailyData[r.date]) {
+        dailyData[r.date].food += Number(r.calories) || 0;
+        dailyData[r.date].protein = Math.round(((dailyData[r.date].protein || 0) + (Number(r.protein) || 0)) * 10) / 10;
+        dailyData[r.date].carbs = Math.round(((dailyData[r.date].carbs || 0) + (Number(r.carbs) || 0)) * 10) / 10;
+        dailyData[r.date].fat = Math.round(((dailyData[r.date].fat || 0) + (Number(r.fat) || 0)) * 10) / 10;
+      }
     });
 
     exerciseRecords.forEach(r => {
-      if (dailyData[r.date]) dailyData[r.date].exercise += r.caloriesBurned;
+      if (dailyData[r.date]) {
+        dailyData[r.date].exercise += Number(r.caloriesBurned) || 0;
+      }
     });
 
     return NextResponse.json({ dailyData, targetCalories });

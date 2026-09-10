@@ -12,7 +12,7 @@ import {
   isToday,
 } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
-import { MEAL_LABELS, type MealType } from '@/lib/types';
+import { MEAL_LABELS, type MealType, compareMealOrder } from '@/lib/types';
 import { 
   Calendar as CalendarIcon, 
   List as ListIcon, 
@@ -72,6 +72,7 @@ export default function ShareCalendarPage({
   const [currentDate, setCurrentDate] = useState(new Date());
   const [dailyData, setDailyData] = useState<Record<string, DayData>>({});
   const [userName, setUserName] = useState<string>(decodedName);
+  const [targetCalories, setTargetCalories] = useState<number>(2000);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -102,6 +103,7 @@ export default function ShareCalendarPage({
 
       setDailyData(data.days || {});
       if (data.userName) setUserName(data.userName);
+      if (data.targetCalories) setTargetCalories(data.targetCalories);
     } catch (err: any) {
       console.error('Fetch share calendar error:', err);
       setError(err.message || '載入失敗');
@@ -266,7 +268,7 @@ export default function ShareCalendarPage({
                     return (
                       <div
                         key={`empty-${idx}`}
-                        className="aspect-square md:aspect-auto md:min-h-[135px] md:h-[145px] rounded-xl bg-slate-950/20 border border-transparent"
+                        className="aspect-square md:aspect-auto md:min-h-[75px] md:h-[85px] rounded-xl bg-slate-950/20 border border-transparent"
                       />
                     );
                   }
@@ -274,114 +276,109 @@ export default function ShareCalendarPage({
                   const dateStr = format(day, 'yyyy-MM-dd');
                   const dayData = dailyData[dateStr] || { date: dateStr, foods: [], exercises: [] };
                   const today = isToday(day);
-                  const hasFoods = dayData.foods.length > 0;
-                  const hasExercises = dayData.exercises.length > 0;
-                  const hasAny = hasFoods || hasExercises;
+                  const daySummary = getDaySummary(dayData);
+                  const hasFood = daySummary.totalCalories > 0;
+                  const hasExercise = daySummary.totalExerciseCalories > 0;
+
+                  // Calculate deficit and color theme
+                  const totalTarget = targetCalories + daySummary.totalExerciseCalories;
+                  const deficit = totalTarget - daySummary.totalCalories;
+                  let colorClass = 'bg-slate-900/30 hover:bg-slate-850 border-white/5 text-slate-400';
+
+                  if (hasFood || hasExercise) {
+                    if (deficit < -150) {
+                      colorClass = 'bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 border-rose-500/40 shadow-[0_0_12px_rgba(244,63,94,0.12)]';
+                    } else if (deficit < 0) {
+                      colorClass = 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border-amber-500/40 shadow-[0_0_12px_rgba(245,158,11,0.1)]';
+                    } else if (deficit > 200) {
+                      colorClass = 'bg-emerald-500/25 hover:bg-emerald-500/35 text-emerald-100 border-emerald-500/40 shadow-[0_0_12px_rgba(16,185,129,0.15)]';
+                    } else {
+                      colorClass = 'bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-200 border-emerald-500/30';
+                    }
+                  }
 
                   return (
-                    <div
+                    <button
                       key={dateStr}
                       onClick={() => setSelectedDay(dayData)}
                       className={`
-                        group relative rounded-xl border p-1.5 md:p-2.5 transition-all cursor-pointer flex flex-col justify-between
-                        aspect-square md:aspect-auto md:min-h-[135px] md:h-[145px] overflow-hidden
+                        rounded-xl p-1.5 sm:p-2 border transition-all flex flex-col justify-between text-left cursor-pointer
+                        aspect-square md:aspect-auto md:min-h-[75px] md:h-[85px] overflow-hidden
+                        ${colorClass}
                         ${
                           today
-                            ? 'bg-emerald-500/[0.08] border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.15)] ring-1 ring-emerald-500/30'
-                            : hasAny
-                            ? 'bg-slate-800/40 hover:bg-slate-800/70 border-white/10 hover:border-white/20'
-                            : 'bg-slate-900/30 hover:bg-slate-900/60 border-white/5'
+                            ? 'ring-2 ring-emerald-400/80 ring-offset-1 ring-offset-[#0b0f1a]'
+                            : ''
                         }
-                        hover:scale-[1.01] active:scale-[0.99]
+                        hover:scale-[1.02] active:scale-[0.98]
                       `}
                     >
                       {/* Top Date Header */}
-                      <div className="flex items-center justify-between mb-1 shrink-0">
+                      <div className="flex items-center justify-between w-full shrink-0">
                         <span
-                          className={`text-xs sm:text-sm font-bold ${
+                          className={`text-[11px] sm:text-xs md:text-sm font-bold ${
                             today
-                              ? 'text-emerald-400 bg-emerald-500/20 px-1.5 py-0.2 rounded-md'
+                              ? 'text-emerald-400 bg-emerald-500/20 px-1 rounded'
                               : 'text-slate-300'
                           }`}
                         >
                           {format(day, 'd')}
                         </span>
-                        {today && (
-                          <span className="hidden md:inline-block text-[10px] text-emerald-400 font-semibold">
-                            今天
+                        {hasExercise && (
+                          <span className="text-[9px] sm:text-[10px] font-medium text-indigo-300 bg-indigo-500/20 px-1 rounded border border-indigo-500/30">
+                            🏃 -{daySummary.totalExerciseCalories}
                           </span>
                         )}
+                        {today && !hasExercise && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                        )}
                       </div>
 
-                      {/* Content: Direct Item Listing on PC / Tablets (md & above) */}
-                      <div className="hidden md:flex flex-col gap-1 overflow-y-auto pr-0.5 text-[11px] leading-tight flex-1">
-                        {/* Food List */}
-                        {dayData.foods.map((food, fIdx) => (
-                          <div
-                            key={food.id || fIdx}
-                            className="flex items-start gap-1 text-emerald-200/90 bg-emerald-500/10 hover:bg-emerald-500/20 px-1.5 py-0.5 rounded border border-emerald-500/20"
-                            title={`${MEAL_LABELS[food.mealType] || '飲食'}：${food.name}`}
-                          >
-                            <span className="font-bold text-emerald-400 shrink-0">
-                              [{MEAL_LABELS[food.mealType] || '飲食'}]
+                      {/* Center Calorie Display */}
+                      <div className="flex flex-col items-center justify-center flex-1 w-full text-center my-auto">
+                        {hasFood ? (
+                          <div className="flex flex-col items-center justify-center">
+                            <span className="font-black text-xs sm:text-sm md:text-base leading-tight tracking-tight text-white">
+                              {daySummary.totalCalories.toLocaleString()}
                             </span>
-                            <span className="line-clamp-2">{food.name}</span>
-                          </div>
-                        ))}
-
-                        {/* Exercise List */}
-                        {dayData.exercises.map((ex, eIdx) => (
-                          <div
-                            key={ex.id || eIdx}
-                            className="flex items-center gap-1 text-indigo-200/90 bg-indigo-500/10 hover:bg-indigo-500/20 px-1.5 py-0.5 rounded border border-indigo-500/20 truncate"
-                            title={`運動：${ex.type} (${ex.amount})`}
-                          >
-                            <span className="truncate font-medium">
-                              {ex.type} {ex.amount ? `(${ex.amount})` : ''}
+                            <span className="text-[8px] sm:text-[9px] md:text-[10px] font-medium text-slate-400 leading-none mt-0.5">
+                              kcal
                             </span>
                           </div>
-                        ))}
-
-                        {/* Empty placeholder on PC */}
-                        {!hasAny && (
-                          <div className="h-full flex items-center justify-center text-[10px] text-slate-600 italic">
-                            -
+                        ) : hasExercise ? (
+                          <div className="flex flex-col items-center justify-center text-[10px] sm:text-xs text-indigo-300 font-semibold leading-tight">
+                            <span>-{daySummary.totalExerciseCalories}</span>
+                            <span className="text-[8px] sm:text-[9px] font-medium opacity-80">kcal</span>
                           </div>
+                        ) : (
+                          <span className="text-[10px] sm:text-xs text-slate-600">-</span>
                         )}
                       </div>
-
-                      {/* Content: Mobile Compact View (Dots & count badge on small screens) */}
-                      <div className="md:hidden flex flex-col items-center justify-center gap-0.5 flex-1">
-                        {hasFoods && (
-                          <div className="flex items-center gap-1 text-[10px] text-emerald-300 font-medium bg-emerald-500/15 px-1 rounded">
-                            <span className="w-1 h-1 rounded-full bg-emerald-400" />
-                            <span>{dayData.foods.length}餐</span>
-                          </div>
-                        )}
-                        {hasExercises && (
-                          <div className="flex items-center gap-1 text-[10px] text-indigo-300 font-medium bg-indigo-500/15 px-1 rounded">
-                            <span className="w-1 h-1 rounded-full bg-indigo-400" />
-                            <span>{dayData.exercises.length}項</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                    </button>
                   );
                 })}
               </div>
 
               {/* Grid Legend */}
-              <div className="mt-6 pt-4 border-t border-white/5 flex flex-wrap items-center justify-center gap-5 text-xs text-slate-400">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
-                  <span>飲食項目</span>
+              <div className="mt-5 pt-3 border-t border-white/5 flex flex-wrap gap-4 sm:gap-6 justify-center text-[11px] font-medium text-slate-400">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-sm bg-emerald-500/40 border border-emerald-500/50" />
+                  <span>大赤字 ({'>'}200)</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-indigo-400" />
-                  <span>運動項目</span>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-sm bg-emerald-500/20 border border-emerald-500/30" />
+                  <span>達成目標</span>
                 </div>
-                <span className="text-slate-500 text-[11px]">
-                  💡 點擊任一日期方格可查看完整大字卡片
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-sm bg-amber-500/25 border border-amber-500/40" />
+                  <span>輕微超標</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-sm bg-rose-500/30 border border-rose-500/40" />
+                  <span>超標較多</span>
+                </div>
+                <span className="text-slate-500 text-[11px] hidden sm:inline">
+                  💡 點擊任一日期方格可查看詳細食物與運動清單
                 </span>
               </div>
             </div>
@@ -425,9 +422,12 @@ export default function ShareCalendarPage({
                   >
                     {/* Date Header */}
                     <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/5">
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                         <span className="text-base sm:text-lg font-bold text-white">
                           {format(dateObj, 'M月d日 (EEEE)', { locale: zhTW })}
+                        </span>
+                        <span className="text-base sm:text-lg font-bold text-emerald-400">
+                          總熱量 {daySummary.totalCalories} kcal
                         </span>
                         {today && (
                           <span className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
@@ -441,22 +441,17 @@ export default function ShareCalendarPage({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {/* Foods Column */}
                       <div className="bg-slate-950/30 rounded-xl p-3.5 border border-white/5">
-                        <div className="mb-2.5 flex flex-wrap items-center justify-between gap-1.5 text-xs">
-                          <span className="font-bold text-emerald-400 flex items-center gap-1">
-                            總熱量 {daySummary.totalCalories} kcal
-                          </span>
-                          <span className="text-[11px] text-slate-400 flex items-center gap-1.5">
-                            <span>蛋白質 <b className="text-slate-200 font-mono">{daySummary.totalProtein}g</b></span>
-                            <span>·</span>
-                            <span>碳水 <b className="text-slate-200 font-mono">{daySummary.totalCarbs}g</b></span>
-                            <span>·</span>
-                            <span>脂肪 <b className="text-slate-200 font-mono">{daySummary.totalFat}g</b></span>
-                          </span>
+                        <div className="mb-2.5 flex flex-wrap items-center gap-2 text-xs text-slate-300">
+                          <span>蛋白質 <b className="text-slate-100 font-mono">{daySummary.totalProtein}g</b></span>
+                          <span className="text-slate-500">·</span>
+                          <span>碳水 <b className="text-slate-100 font-mono">{daySummary.totalCarbs}g</b></span>
+                          <span className="text-slate-500">·</span>
+                          <span>脂肪 <b className="text-slate-100 font-mono">{daySummary.totalFat}g</b></span>
                         </div>
 
                         {hasFoods ? (
                           <ul className="space-y-1.5">
-                            {day.foods.map((food, fIdx) => (
+                            {[...day.foods].sort(compareMealOrder).map((food, fIdx) => (
                               <li
                                 key={food.id || fIdx}
                                 className="flex items-start justify-between text-xs py-1.5 px-2.5 rounded-lg bg-white/[0.02] border border-white/5"
@@ -483,9 +478,7 @@ export default function ShareCalendarPage({
                       {/* Exercises Column */}
                       <div className="bg-slate-950/30 rounded-xl p-3.5 border border-white/5">
                         <div className="mb-2.5 flex items-center justify-between text-xs font-bold text-indigo-400">
-                          <span className="flex items-center gap-1">
-                            運動消耗 {daySummary.totalExerciseCalories} kcal
-                          </span>
+                          <span>運動</span>
                         </div>
 
                         {hasExercises ? (
@@ -540,7 +533,9 @@ export default function ShareCalendarPage({
                       locale: zhTW,
                     })}
                   </h3>
-                  <p className="text-xs text-slate-400 mt-0.5">當日紀錄清單</p>
+                  <div className="text-sm font-bold text-emerald-400 mt-0.5">
+                    總熱量 {selectedSummary.totalCalories} kcal
+                  </div>
                 </div>
                 <button
                   onClick={() => setSelectedDay(null)}
@@ -554,22 +549,17 @@ export default function ShareCalendarPage({
               <div className="space-y-5 max-h-[65vh] overflow-y-auto pr-1">
                 {/* Foods */}
                 <div>
-                  <div className="mb-2.5 flex flex-wrap items-center justify-between gap-1.5 text-sm">
-                    <span className="font-bold text-emerald-400">
-                      總熱量 {selectedSummary.totalCalories} kcal
-                    </span>
-                    <span className="text-xs text-slate-400 flex items-center gap-1.5">
-                      <span>蛋白質 <b className="text-slate-200 font-mono">{selectedSummary.totalProtein}g</b></span>
-                      <span>·</span>
-                      <span>碳水 <b className="text-slate-200 font-mono">{selectedSummary.totalCarbs}g</b></span>
-                      <span>·</span>
-                      <span>脂肪 <b className="text-slate-200 font-mono">{selectedSummary.totalFat}g</b></span>
-                    </span>
+                  <div className="mb-2.5 flex flex-wrap items-center gap-2 text-xs sm:text-sm text-slate-300">
+                    <span>蛋白質 <b className="text-slate-100 font-mono">{selectedSummary.totalProtein}g</b></span>
+                    <span className="text-slate-500">·</span>
+                    <span>碳水 <b className="text-slate-100 font-mono">{selectedSummary.totalCarbs}g</b></span>
+                    <span className="text-slate-500">·</span>
+                    <span>脂肪 <b className="text-slate-100 font-mono">{selectedSummary.totalFat}g</b></span>
                   </div>
 
                   {selectedDay.foods.length > 0 ? (
                     <div className="space-y-2">
-                      {selectedDay.foods.map((food, fIdx) => (
+                      {[...selectedDay.foods].sort(compareMealOrder).map((food, fIdx) => (
                         <div
                           key={food.id || fIdx}
                           className="flex items-start justify-between p-2.5 rounded-xl bg-slate-800/60 border border-emerald-500/20"
@@ -598,9 +588,7 @@ export default function ShareCalendarPage({
                 {/* Exercises */}
                 <div>
                   <div className="mb-2.5 flex items-center justify-between text-sm font-bold text-indigo-400">
-                    <span>
-                      運動消耗 {selectedSummary.totalExerciseCalories} kcal
-                    </span>
+                    <span>運動</span>
                   </div>
 
                   {selectedDay.exercises.length > 0 ? (
