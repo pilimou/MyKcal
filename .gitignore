@@ -31,3 +31,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local automation scripts
+dev.bat
+push.bat
+manage.mjs
+manage.py
+manage.ps1
+
