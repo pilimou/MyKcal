@@ -435,7 +435,7 @@ export default function ShareCalendarPage({
                           </span>
                         )}
                       </div>
-                      <span className="text-xs text-slate-500">{day.date}</span>
+                      <span className="text-xs text-slate-500">{format(dateObj, 'yyyy年')}</span>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
