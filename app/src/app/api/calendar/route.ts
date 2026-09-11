@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
     const targetCalories = profile?.targetCalories || 2000;
 
     // Group by date
-    const dailyData: Record<string, { food: number; exercise: number; target: number; protein: number; carbs: number; fat: number }> = {};
+    const dailyData: Record<string, { food: number; exercise: number; exerciseCount: number; target: number; protein: number; carbs: number; fat: number }> = {};
 
     // Initialize all days of the month
     for (let i = 1; i <= lastDay; i++) {

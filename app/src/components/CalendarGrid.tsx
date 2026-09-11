@@ -125,7 +125,7 @@ export default function CalendarGrid({
           const isSelected = selectedDate === dateStr;
           const data = dailyData[dateStr];
           const hasFood = data && data.food > 0;
-          const hasExercise = !!(data && (data.exerciseCount ?? 0) > 0);
+          const hasExercise = !!(data && ((data.exerciseCount ?? 0) > 0 || (data.exercise ?? 0) > 0));
           const colorClass = getCalorieStatusColor(data);
           
           return (
@@ -136,10 +136,11 @@ export default function CalendarGrid({
                 rounded-xl p-1.5 sm:p-2 border transition-all flex flex-col justify-between text-left cursor-pointer
                 aspect-square md:aspect-auto md:min-h-[75px] md:h-[85px] overflow-hidden
                 ${colorClass}
+                ${hasExercise ? '!border-indigo-500 !border-2' : ''}
                 ${isSelected ? '!border-emerald-400 ring-2 ring-emerald-500/50 scale-[1.02]' : ''}
                 hover:scale-[1.02] active:scale-[0.98]
               `}
-              style={hasExercise ? { borderColor: 'rgba(99,102,241,1)', borderWidth: '2px' } : undefined}
+              style={hasExercise ? { borderColor: '#6366f1', borderWidth: '2px' } : undefined}
             >
               {/* Top Row: Date Number & Today/Exercise indicators */}
               <div className="flex items-center justify-between w-full shrink-0">
