@@ -79,6 +79,7 @@ export interface UserProfile {
 export interface CalendarDaySummary {
   food: number;
   exercise: number;
+  exerciseCount?: number;
   target: number;
   protein?: number;
   carbs?: number;

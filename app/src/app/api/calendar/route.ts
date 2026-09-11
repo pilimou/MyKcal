@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
     // Initialize all days of the month
     for (let i = 1; i <= lastDay; i++) {
       const date = `${currentMonth}-${String(i).padStart(2, '0')}`;
-      dailyData[date] = { food: 0, exercise: 0, target: targetCalories, protein: 0, carbs: 0, fat: 0 };
+      dailyData[date] = { food: 0, exercise: 0, exerciseCount: 0, target: targetCalories, protein: 0, carbs: 0, fat: 0 };
     }
 
     foodRecords.forEach(r => {
@@ -52,6 +52,7 @@ export async function GET(req: NextRequest) {
     exerciseRecords.forEach(r => {
       if (dailyData[r.date]) {
         dailyData[r.date].exercise += Number(r.caloriesBurned) || 0;
+        dailyData[r.date].exerciseCount = (dailyData[r.date].exerciseCount || 0) + 1;
       }
     });
 

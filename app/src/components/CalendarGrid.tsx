@@ -125,7 +125,7 @@ export default function CalendarGrid({
           const isSelected = selectedDate === dateStr;
           const data = dailyData[dateStr];
           const hasFood = data && data.food > 0;
-          const hasExercise = data && data.exercise > 0;
+          const hasExercise = !!(data && (data.exerciseCount ?? 0) > 0);
           const colorClass = getCalorieStatusColor(data);
           
           return (
@@ -136,22 +136,17 @@ export default function CalendarGrid({
                 rounded-xl p-1.5 sm:p-2 border transition-all flex flex-col justify-between text-left cursor-pointer
                 aspect-square md:aspect-auto md:min-h-[75px] md:h-[85px] overflow-hidden
                 ${colorClass}
-                ${isToday ? 'ring-2 ring-emerald-400/80 ring-offset-1 ring-offset-[#0b0f1a]' : ''}
                 ${isSelected ? '!border-emerald-400 ring-2 ring-emerald-500/50 scale-[1.02]' : ''}
                 hover:scale-[1.02] active:scale-[0.98]
               `}
+              style={hasExercise ? { borderColor: 'rgba(99,102,241,1)', borderWidth: '2px' } : undefined}
             >
               {/* Top Row: Date Number & Today/Exercise indicators */}
               <div className="flex items-center justify-between w-full shrink-0">
                 <span className={`text-[11px] sm:text-xs md:text-sm font-bold ${isToday ? 'text-emerald-400 bg-emerald-500/20 px-1 rounded' : 'text-slate-300'}`}>
                   {format(day, 'd')}
                 </span>
-                {hasExercise && (
-                  <span className="text-[9px] sm:text-[10px] font-medium text-indigo-300 bg-indigo-500/20 px-1 rounded border border-indigo-500/30">
-                    🏃 -{data.exercise}
-                  </span>
-                )}
-                {isToday && !hasExercise && (
+                {isToday && (
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
                 )}
               </div>
@@ -166,11 +161,6 @@ export default function CalendarGrid({
                     <span className="text-[8px] sm:text-[9px] md:text-[10px] font-medium text-slate-400 leading-none mt-0.5">
                       kcal
                     </span>
-                  </div>
-                ) : hasExercise ? (
-                  <div className="flex flex-col items-center justify-center text-[10px] sm:text-xs text-indigo-300 font-semibold leading-tight">
-                    <span>-{data.exercise}</span>
-                    <span className="text-[8px] sm:text-[9px] font-medium opacity-80">kcal</span>
                   </div>
                 ) : (
                   <span className="text-[10px] sm:text-xs text-slate-600">-</span>
