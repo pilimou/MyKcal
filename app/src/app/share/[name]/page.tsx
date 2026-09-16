@@ -9,6 +9,7 @@ import {
   getDay,
   addMonths,
   subMonths,
+  addDays,
   isToday,
 } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
@@ -79,15 +80,6 @@ export default function ShareCalendarPage({
   const [selectedDay, setSelectedDay] = useState<DayData | null>(null);
   const [onlyRecordedDays, setOnlyRecordedDays] = useState(true);
 
-  // 裝置偵測：手機預設為「整月清單」，電腦/寬螢幕預設為「月曆網格」
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const isMobile =
-        window.innerWidth < 768 ||
-        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      setViewMode(isMobile ? 'list' : 'grid');
-    }
-  }, []);
 
   const fetchShareData = useCallback(async (date: Date) => {
     setLoading(true);
@@ -115,6 +107,56 @@ export default function ShareCalendarPage({
   useEffect(() => {
     fetchShareData(currentDate);
   }, [currentDate, fetchShareData]);
+
+  // 切換上一天或下一天
+  const handleNavigateDay = useCallback(
+    (offset: number) => {
+      if (!selectedDay) return;
+      const curr = new Date(`${selectedDay.date}T00:00:00`);
+      const target = addDays(curr, offset);
+      const targetStr = format(target, 'yyyy-MM-dd');
+
+      // 若跨月份，更新 currentDate 以抓取該月份資料
+      if (format(target, 'yyyy-MM') !== format(currentDate, 'yyyy-MM')) {
+        setCurrentDate(target);
+      }
+
+      setSelectedDay(
+        dailyData[targetStr] || {
+          date: targetStr,
+          foods: [],
+          exercises: [],
+        }
+      );
+    },
+    [selectedDay, currentDate, dailyData]
+  );
+
+  // 當 dailyData 更新（如跨月抓取完成）且目前已打開特定日期時，自動同步最新內容
+  useEffect(() => {
+    if (selectedDay) {
+      const updated = dailyData[selectedDay.date];
+      if (updated && (updated.foods !== selectedDay.foods || updated.exercises !== selectedDay.exercises)) {
+        setSelectedDay(updated);
+      }
+    }
+  }, [dailyData, selectedDay]);
+
+  // 鍵盤左右鍵快捷切換上一天/下一天，ESC 關閉彈窗
+  useEffect(() => {
+    if (!selectedDay) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') {
+        handleNavigateDay(-1);
+      } else if (e.key === 'ArrowRight') {
+        handleNavigateDay(1);
+      } else if (e.key === 'Escape') {
+        setSelectedDay(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedDay, handleNavigateDay]);
 
   // Generate calendar grid days (including padding)
   const calendarDays = useMemo(() => {
@@ -520,15 +562,35 @@ export default function ShareCalendarPage({
             <div className="glass-card max-w-lg w-full p-5 sm:p-6 rounded-2xl border border-white/15 bg-slate-900 shadow-2xl relative animate-scale-in">
               {/* Modal Header */}
               <div className="mb-4 pb-3 border-b border-white/10">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-bold text-white">
-                    {format(new Date(`${selectedDay.date}T00:00:00`), 'yyyy年 M月d日 (EEEE)', {
-                      locale: zhTW,
-                    })}
-                  </h3>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1 sm:gap-2 min-w-0">
+                    <button
+                      onClick={() => handleNavigateDay(-1)}
+                      className="p-1.5 rounded-xl bg-white/5 hover:bg-white/10 active:scale-95 text-slate-300 hover:text-white border border-white/10 transition"
+                      title="上一天 (←)"
+                      aria-label="上一天"
+                    >
+                      <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </button>
+                    <h3 className="text-sm sm:text-lg font-bold text-white truncate">
+                      {format(new Date(`${selectedDay.date}T00:00:00`), 'yyyy年 M月d日 (EEEE)', {
+                        locale: zhTW,
+                      })}
+                    </h3>
+                    <button
+                      onClick={() => handleNavigateDay(1)}
+                      className="p-1.5 rounded-xl bg-white/5 hover:bg-white/10 active:scale-95 text-slate-300 hover:text-white border border-white/10 transition"
+                      title="下一天 (→)"
+                      aria-label="下一天"
+                    >
+                      <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </button>
+                  </div>
                   <button
                     onClick={() => setSelectedDay(null)}
-                    className="p-1.5 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition"
+                    className="p-1.5 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition shrink-0"
+                    title="關閉 (ESC)"
+                    aria-label="關閉"
                   >
                     <X className="w-5 h-5" />
                   </button>

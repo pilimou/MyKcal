@@ -5,7 +5,8 @@ import { useSession } from 'next-auth/react';
 import CalendarGrid from '@/components/CalendarGrid';
 import RecordItem from '@/components/RecordItem';
 import { type FoodRecord, type ExerciseRecord, type CalendarDaySummary, compareMealOrder } from '@/lib/types';
-import { format } from 'date-fns';
+import { format, addDays } from 'date-fns';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function CalendarPage() {
   const { data: session } = useSession();
@@ -77,6 +78,17 @@ export default function CalendarPage() {
     }
   };
 
+  const handleNavigateDate = (offset: number) => {
+    if (!selectedDate) return;
+    const curr = new Date(`${selectedDate}T00:00:00`);
+    const target = addDays(curr, offset);
+    const targetStr = format(target, 'yyyy-MM-dd');
+    if (format(target, 'yyyy-MM') !== format(currentDate, 'yyyy-MM')) {
+      setCurrentDate(target);
+    }
+    handleDateClick(targetStr);
+  };
+
   return (
     <main className="page animate-fade-in pb-24 w-full">
       <div className="flex items-center justify-between mb-4">
@@ -106,8 +118,28 @@ export default function CalendarPage() {
 
       {selectedDate && (
         <div className="mt-8 animate-slide-up">
-          <div className="flex justify-between items-baseline mb-4">
-            <h2 className="text-lg font-bold">{selectedDate} <span className="text-xs font-normal text-slate-500 ml-1">細節</span></h2>
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handleNavigateDate(-1)}
+                className="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition active:scale-95 border border-slate-700"
+                title="上一天"
+                aria-label="上一天"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <h2 className="text-lg font-bold">
+                {selectedDate} <span className="text-xs font-normal text-slate-500 ml-1">細節</span>
+              </h2>
+              <button
+                onClick={() => handleNavigateDate(1)}
+                className="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition active:scale-95 border border-slate-700"
+                title="下一天"
+                aria-label="下一天"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
             {dailyData[selectedDate] && (
               <div className="text-right">
                 <span className={`text-sm font-bold ${
